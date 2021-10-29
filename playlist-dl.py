@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import unicode_literals
 
@@ -12,14 +12,16 @@ import youtube_dl
 def clean_url(url):
     parsed = urlparse(url)
     query = parse_qs(parsed.query)
+    if not query:
+        return None
     new_query_params = {'v': query['v']}
     return urlunparse(parsed._replace(query=urlencode(new_query_params, True)))
 
 
-def get_youtube_links(workbook_name, start_row, start_col):
+def get_youtube_links(workbook_name, sheet_num, start_row, start_col):
     base_col = openpyxl.utils.column_index_from_string(start_col)
     workbook = openpyxl.load_workbook(workbook_name)
-    worksheet = workbook[workbook.sheetnames[0]]
+    worksheet = workbook[workbook.sheetnames[sheet_num]]
     for row in range(start_row, worksheet.max_row):
         ytb_link = worksheet.cell(column=base_col, row=row).value
         if ytb_link is not None:
@@ -27,11 +29,13 @@ def get_youtube_links(workbook_name, start_row, start_col):
 
 
 filename = sys.argv[1]
-cell = sys.argv[2]
+sheet_num = int(sys.argv[2])
+cell = sys.argv[3]
 
-links = get_youtube_links(sys.argv[1], int(cell[1]), cell[0])
+links = get_youtube_links(filename, sheet_num, int(cell[1]), cell[0])
 
 clean_links = [clean_url(link) for link in links]
+clean_links = [link for link in clean_links if link]
 
 
 class SilentLogger(object):
@@ -60,4 +64,7 @@ ydl_opts = {
 }
 
 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-    ydl.download(clean_links)
+    try:
+        ydl.download(clean_links)
+    except Exception as e:
+        print(e)
