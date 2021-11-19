@@ -52,6 +52,7 @@ def my_hook(d):
         print(f'downloaded song={d["filename"]}, now converting ...')
 
 ydl_opts = {
+    'rm_cachedir': True,
     'format': 'bestaudio/best',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
@@ -64,6 +65,7 @@ ydl_opts = {
 }
 
 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+    print(clean_links)
     try:
         ydl.download(clean_links)
     except Exception as e:
